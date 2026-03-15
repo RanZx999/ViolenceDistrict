@@ -1,6 +1,6 @@
 --[[
 ═══════════════════════════════════════════════════════════════
-  VIOLENCE DISTRICT - FIXED Edition
+  VIOLENCE DISTRICT - ULTIMATE Edition
   Created by RanZx999
   UI: Rayfield Premium
 ═══════════════════════════════════════════════════════════════
@@ -9,10 +9,10 @@ Features:
 ✅ Player ESP (Auto-detect!) with Team Check
 ✅ Highlight System (Team colors!)
 ✅ Generator ESP dengan progress %
-✅ Anti-Fail Generator (Auto-pass skill checks!)
-✅ Anti-Fail Healing (Stable Mode)
+✅ Anti-Fail Generator (FIXED - Works perfectly!)
+✅ Anti-Fail Healing (FIXED - Works perfectly!)
 ✅ Hide Skill Check UI (Clean Screen!)
-✅ Fullbright (FIXED - Fog removal complete!)
+✅ Fullbright (Complete fog removal!)
 ✅ Speed & Jump Hack
 ✅ Noclip
 
@@ -86,7 +86,6 @@ local originalLighting = {
     OutdoorAmbient = Lighting.OutdoorAmbient
 }
 
--- Save Atmosphere
 local atm = Lighting:FindFirstChildOfClass("Atmosphere")
 if atm then
     originalLighting.Atmosphere = {
@@ -97,28 +96,19 @@ if atm then
     }
 end
 
--- Save Blur
 local blur = Lighting:FindFirstChildOfClass("BlurEffect")
 if blur then
-    originalLighting.Blur = {
-        Size = blur.Size
-    }
+    originalLighting.Blur = { Size = blur.Size }
 end
 
--- Save ColorCorrection
 local cc = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
 if cc then
-    originalLighting.ColorCorrection = {
-        Enabled = cc.Enabled
-    }
+    originalLighting.ColorCorrection = { Enabled = cc.Enabled }
 end
 
--- Save SunRays
 local sr = Lighting:FindFirstChildOfClass("SunRaysEffect")
 if sr then
-    originalLighting.SunRays = {
-        Enabled = sr.Enabled
-    }
+    originalLighting.SunRays = { Enabled = sr.Enabled }
 end
 
 --// ═══════════════════════════════════════════════════════
@@ -159,99 +149,87 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --// ═══════════════════════════════════════════════════════
---// ANTI-FAIL GENERATOR
+--// ANTI-FAIL SYSTEM (UNIFIED - FIXED!)
 --// ═══════════════════════════════════════════════════════
-local function setupAntiFailGenerator()
-    local success, error = pcall(function()
-        local Remotes = ReplicatedStorage:WaitForChild("Remotes", 10)
-        if not Remotes then return end
-        
-        local GeneratorRemotes = Remotes:WaitForChild("Generator", 5)
-        if not GeneratorRemotes then return end
-        
-        local ResultEvent = GeneratorRemotes:WaitForChild("SkillCheckResultEvent", 5)
-        local FailEvent = GeneratorRemotes:FindFirstChild("SkillCheckFailEvent")
-        
-        if not ResultEvent then return end
-        
-        local oldNamecall
-        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-            local method = getnamecallmethod()
-            local args = {...}
-            
-            if not VDConfig.Generator.AntiFailEnabled then
-                return oldNamecall(self, ...)
+local AntiFailHooked = false
+
+local function setupUnifiedAntiFail()
+    if AntiFailHooked then return end
+    
+    task.spawn(function()
+        local success = pcall(function()
+            -- Wait for remotes
+            local Remotes = ReplicatedStorage:WaitForChild("Remotes", 10)
+            if not Remotes then 
+                warn("⚠️ Remotes not found")
+                return 
             end
             
-            if FailEvent and self == FailEvent and method == "FireServer" then
-                return nil
-            end
+            -- Generator remotes
+            local GenRemotes = Remotes:WaitForChild("Generator", 5)
+            local GenResultEvent = GenRemotes and GenRemotes:WaitForChild("SkillCheckResultEvent", 5)
+            local GenFailEvent = GenRemotes and GenRemotes:FindFirstChild("SkillCheckFailEvent")
             
-            if self == ResultEvent and method == "FireServer" then
-                if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                    args[1] = true
-                    return oldNamecall(self, unpack(args))
-                else
-                    return nil
+            -- Healing remotes
+            local Healing = ReplicatedStorage:FindFirstChild("Healing")
+            local HealResultEvent = Healing and Healing:FindFirstChild("SkillCheckResultEvent")
+            local HealFailEvent = Healing and Healing:FindFirstChild("SkillCheckFailEvent")
+            
+            -- Hook metamethod
+            local oldNamecall
+            oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+                local method = getnamecallmethod()
+                local args = {...}
+                
+                -- GENERATOR ANTI-FAIL
+                if GenResultEvent and VDConfig.Generator.AntiFailEnabled then
+                    -- Block fail event
+                    if GenFailEvent and self == GenFailEvent and method == "FireServer" then
+                        return nil
+                    end
+                    
+                    -- Force success on generator
+                    if self == GenResultEvent and method == "FireServer" then
+                        if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                            args[1] = true
+                            return oldNamecall(self, unpack(args))
+                        else
+                            return nil
+                        end
+                    end
                 end
-            end
-            
-            return oldNamecall(self, ...)
-        end)
-        
-        print("✅ Anti-Fail Generator hooked!")
-    end)
-    
-    if not success then
-        warn("⚠️ Anti-Fail Generator hook failed:", error)
-    end
-end
-
-setupAntiFailGenerator()
-
---// ═══════════════════════════════════════════════════════
---// ANTI-FAIL HEALING
---// ═══════════════════════════════════════════════════════
-local function setupAntiFailHeal()
-    local success = pcall(function()
-        local Healing = ReplicatedStorage:WaitForChild("Healing", 5)
-        if not Healing then return end
-        
-        local ResultEvent = Healing:WaitForChild("SkillCheckResultEvent", 5)
-        local FailEvent = Healing:WaitForChild("SkillCheckFailEvent", 5)
-        
-        if not ResultEvent or not FailEvent then return end
-        
-        local oldNamecall
-        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-            local method = getnamecallmethod()
-            local args = {...}
-            
-            if not VDConfig.Healing.AntiFailEnabled then
+                
+                -- HEALING ANTI-FAIL
+                if HealResultEvent and VDConfig.Healing.AntiFailEnabled then
+                    -- Block fail event
+                    if HealFailEvent and self == HealFailEvent and method == "FireServer" then
+                        return nil
+                    end
+                    
+                    -- Force success on healing
+                    if self == HealResultEvent and method == "FireServer" then
+                        args[1] = true
+                        return oldNamecall(self, unpack(args))
+                    end
+                end
+                
                 return oldNamecall(self, ...)
-            end
+            end)
             
-            if self == FailEvent and method == "FireServer" then
-                return nil
-            end
-            
-            if self == ResultEvent and method == "FireServer" then
-                args[1] = true
-                return oldNamecall(self, unpack(args))
-            end
-            
-            return oldNamecall(self, ...)
+            AntiFailHooked = true
+            print("✅ Unified Anti-Fail System hooked successfully!")
+            if GenResultEvent then print("  ✅ Generator Anti-Fail ready") end
+            if HealResultEvent then print("  ✅ Healing Anti-Fail ready") end
         end)
         
-        print("✅ Anti-Fail Heal hooked!")
+        if not success then
+            warn("⚠️ Anti-Fail System hook failed")
+        end
     end)
-    
-    if not success then
-        warn("⚠️ Anti-Fail Heal: Healing remotes not found")
-    end
 end
 
-setupAntiFailHeal()
+-- Initialize anti-fail system
+setupUnifiedAntiFail()
 
 --// ═══════════════════════════════════════════════════════
 --// PLAYER ESP (AUTO-DETECT!)
@@ -596,22 +574,19 @@ task.spawn(function()
 end)
 
 --// ═══════════════════════════════════════════════════════
---// FULLBRIGHT (FOG REMOVAL INCLUDED!)
+--// FULLBRIGHT (FOG REMOVAL!)
 --// ═══════════════════════════════════════════════════════
 task.spawn(function()
     while true do
         if VDConfig.Visual.FullbrightEnabled then
-            -- Basic fullbright
             Lighting.Brightness = 2
             Lighting.ClockTime = 14
             Lighting.GlobalShadows = false
             Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
             
-            -- ✅ REMOVE FOG COMPLETELY!
             Lighting.FogStart = 0
             Lighting.FogEnd = 100000
             
-            -- ✅ Remove all visual effects
             for _, v in pairs(Lighting:GetChildren()) do
                 if v:IsA("Atmosphere") then
                     v.Density = 0
@@ -633,7 +608,6 @@ task.spawn(function()
                 end
             end
         else
-            -- Restore original settings
             Lighting.Brightness = originalLighting.Brightness
             Lighting.ClockTime = originalLighting.ClockTime
             Lighting.FogEnd = originalLighting.FogEnd
@@ -641,7 +615,6 @@ task.spawn(function()
             Lighting.GlobalShadows = originalLighting.GlobalShadows
             Lighting.OutdoorAmbient = originalLighting.OutdoorAmbient
             
-            -- Restore effects
             for _, v in pairs(Lighting:GetChildren()) do
                 if v:IsA("Atmosphere") and originalLighting.Atmosphere then
                     v.Density = originalLighting.Atmosphere.Density or 0.3
@@ -1154,7 +1127,7 @@ MovementTab:CreateToggle({
 SettingsTab:CreateSection("Script Information")
 
 SettingsTab:CreateLabel("Script: VIOLENCE DISTRICT")
-SettingsTab:CreateLabel("Version: 1.1 FIXED")
+SettingsTab:CreateLabel("Version: 1.2 ULTIMATE")
 SettingsTab:CreateLabel("Created by: RanZx999")
 SettingsTab:CreateLabel("UI: Rayfield Premium")
 
@@ -1191,15 +1164,14 @@ SettingsTab:CreateLabel("• All features auto-save")
 Rayfield:LoadConfiguration()
 
 print("═══════════════════════════════════════════════════════")
-print("🔥 VIOLENCE DISTRICT - FIXED Edition 🔥")
+print("🔥 VIOLENCE DISTRICT - ULTIMATE Edition 🔥")
 print("═══════════════════════════════════════════════════════")
 print("✅ Player ESP - Auto-detect + Team Check")
 print("✅ Highlight - Team colors (Green/Red)")
 print("✅ Generator ESP - Auto-scan")
-print("✅ Anti-Fail Generator - Hooked")
-print("✅ Anti-Fail Healing - Hooked")
+print("✅ Anti-Fail System - UNIFIED (Generator + Healing)")
 print("✅ Hide Skill Check UI - Ready")
-print("✅ Fullbright - FIXED (Fog removed!)")
+print("✅ Fullbright - Complete fog removal")
 print("✅ Movement - Ready")
 print("═══════════════════════════════════════════════════════")
 print("Created by RanZx999 | UI: Rayfield Premium")
