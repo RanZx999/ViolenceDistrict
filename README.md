@@ -195,10 +195,10 @@ Config.Movement = {
 ## 📸 Screenshots
 
 ### Main UI
-![Main UI](https://via.placeholder.com/800x400?text=Main+UI+Screenshot)
+![Main UI](https://raw.githubusercontent.com/RanZx999/AllimageE/refs/heads/main/Screenshot%202026-03-15%20153849.png)
 
 ### Player ESP in Action
-![Player ESP](https://via.placeholder.com/800x400?text=Player+ESP+Screenshot)
+![Player ESP](https://raw.githubusercontent.com/RanZx999/AllimageE/refs/heads/main/Screenshot%202026-03-15%20154246.png)
 
 ### Generator ESP
 ![Generator ESP](https://via.placeholder.com/800x400?text=Generator+ESP+Screenshot)
