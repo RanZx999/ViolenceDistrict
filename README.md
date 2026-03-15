@@ -201,7 +201,7 @@ Config.Movement = {
 ![Player ESP](https://raw.githubusercontent.com/RanZx999/AllimageE/refs/heads/main/Screenshot%202026-03-15%20154246.png)
 
 ### Generator ESP
-![Generator ESP](https://via.placeholder.com/800x400?text=Generator+ESP+Screenshot)
+![Generator ESP](https://raw.githubusercontent.com/RanZx999/AllimageE/refs/heads/main/Screenshot%202026-03-15%20155029.png)
 
 ---
 
