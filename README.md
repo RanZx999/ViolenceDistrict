@@ -113,7 +113,7 @@
 Copy and execute this in your executor:
 
 ```lua
-loadstring(game:HttpGet('https://raw.githubusercontent.com/RanZx999/violence-district/main/ViolenceDistrict_FULL.lua'))()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/RanZx999/ViolenceDistrict/main/ViolenceDistrict.lua'))()
 ```
 
 ### Method 2: Manual Download
