@@ -116,14 +116,6 @@ Copy and execute this in your executor:
 loadstring(game:HttpGet('https://raw.githubusercontent.com/RanZx999/ViolenceDistrict/main/ViolenceDistrict.lua'))()
 ```
 
-### Method 2: Manual Download
-
-1. Download the script from [Releases](https://github.com/RanZx999/violence-district/releases)
-2. Copy the script content
-3. Paste into your executor
-4. Execute!
-
----
 
 ## 🎮 Usage
 
