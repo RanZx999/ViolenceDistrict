@@ -1,6 +1,6 @@
 --[[
 ═══════════════════════════════════════════════════════════════
-  VIOLENCE DISTRICT - FULL Edition
+  VIOLENCE DISTRICT - FIXED Edition
   Created by RanZx999
   UI: Rayfield Premium
 ═══════════════════════════════════════════════════════════════
@@ -12,7 +12,7 @@ Features:
 ✅ Anti-Fail Generator (Auto-pass skill checks!)
 ✅ Anti-Fail Healing (Stable Mode)
 ✅ Hide Skill Check UI (Clean Screen!)
-✅ Fullbright (Toggleable)
+✅ Fullbright (FIXED - Fog removal complete!)
 ✅ Speed & Jump Hack
 ✅ Noclip
 
@@ -73,17 +73,53 @@ getgenv().VDConfig = {
 }
 
 --// COLORS
-local TeamColor = Color3.fromRGB(0, 255, 0) -- Green for teammates
-local EnemyColor = Color3.fromRGB(255, 0, 0) -- Red for enemies
+local TeamColor = Color3.fromRGB(0, 255, 0)
+local EnemyColor = Color3.fromRGB(255, 0, 0)
 
---// SAVE ORIGINAL LIGHTING
+--// SAVE ORIGINAL LIGHTING (COMPLETE!)
 local originalLighting = {
     Brightness = Lighting.Brightness,
     ClockTime = Lighting.ClockTime,
     FogEnd = Lighting.FogEnd,
+    FogStart = Lighting.FogStart,
     GlobalShadows = Lighting.GlobalShadows,
     OutdoorAmbient = Lighting.OutdoorAmbient
 }
+
+-- Save Atmosphere
+local atm = Lighting:FindFirstChildOfClass("Atmosphere")
+if atm then
+    originalLighting.Atmosphere = {
+        Density = atm.Density,
+        Offset = atm.Offset,
+        Glare = atm.Glare,
+        Haze = atm.Haze
+    }
+end
+
+-- Save Blur
+local blur = Lighting:FindFirstChildOfClass("BlurEffect")
+if blur then
+    originalLighting.Blur = {
+        Size = blur.Size
+    }
+end
+
+-- Save ColorCorrection
+local cc = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
+if cc then
+    originalLighting.ColorCorrection = {
+        Enabled = cc.Enabled
+    }
+end
+
+-- Save SunRays
+local sr = Lighting:FindFirstChildOfClass("SunRaysEffect")
+if sr then
+    originalLighting.SunRays = {
+        Enabled = sr.Enabled
+    }
+end
 
 --// ═══════════════════════════════════════════════════════
 --// TEAM CHECK FUNCTION
@@ -96,14 +132,14 @@ end
 
 local function getPlayerColor(player)
     if VDConfig.ESP.TeamCheck and isTeammate(player) then
-        return TeamColor -- Green for teammates
+        return TeamColor
     else
-        return EnemyColor -- Red for enemies
+        return EnemyColor
     end
 end
 
 --// ═══════════════════════════════════════════════════════
---// HIDE SKILLCHECK UI (CLEAN SCREEN!)
+--// HIDE SKILLCHECK UI
 --// ═══════════════════════════════════════════════════════
 RunService.RenderStepped:Connect(function()
     if VDConfig.UI.HideSkillCheck then
@@ -298,7 +334,6 @@ local function updatePlayerESP()
             continue
         end
         
-        -- Team Check - hide teammates if enabled
         if VDConfig.ESP.TeamCheck and isTeammate(player) then
             for _, obj in pairs(esp) do obj.Visible = false end
             continue
@@ -396,7 +431,6 @@ local function updatePlayerESP()
     end
 end
 
--- Auto-detect players
 local function setupPlayerESP(player)
     player.CharacterAdded:Connect(function(char)
         char:WaitForChild("HumanoidRootPart")
@@ -441,7 +475,6 @@ local function createHighlight(player)
     highlight.FillTransparency = 0.5
     highlight.OutlineTransparency = 0
     
-    -- Set colors based on team
     if VDConfig.Highlight.TeamCheck then
         if isTeammate(player) then
             highlight.FillColor = TeamColor
@@ -472,7 +505,6 @@ local function updateHighlights()
             continue
         end
         
-        -- Hide teammates if enabled
         if VDConfig.Highlight.TeamCheck and isTeammate(player) and not VDConfig.Highlight.ShowTeam then
             highlight.Enabled = false
             continue
@@ -480,7 +512,6 @@ local function updateHighlights()
             highlight.Enabled = true
         end
         
-        -- Update colors
         if VDConfig.Highlight.TeamCheck then
             if isTeammate(player) then
                 highlight.FillColor = TeamColor
@@ -565,22 +596,72 @@ task.spawn(function()
 end)
 
 --// ═══════════════════════════════════════════════════════
---// FULLBRIGHT
+--// FULLBRIGHT (FOG REMOVAL INCLUDED!)
 --// ═══════════════════════════════════════════════════════
 task.spawn(function()
     while true do
         if VDConfig.Visual.FullbrightEnabled then
+            -- Basic fullbright
             Lighting.Brightness = 2
             Lighting.ClockTime = 14
-            Lighting.FogEnd = 100000
             Lighting.GlobalShadows = false
             Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+            
+            -- ✅ REMOVE FOG COMPLETELY!
+            Lighting.FogStart = 0
+            Lighting.FogEnd = 100000
+            
+            -- ✅ Remove all visual effects
+            for _, v in pairs(Lighting:GetChildren()) do
+                if v:IsA("Atmosphere") then
+                    v.Density = 0
+                    v.Offset = 0
+                    v.Glare = 0
+                    v.Haze = 0
+                end
+                
+                if v:IsA("BlurEffect") then
+                    v.Size = 0
+                end
+                
+                if v:IsA("ColorCorrectionEffect") then
+                    v.Enabled = false
+                end
+                
+                if v:IsA("SunRaysEffect") then
+                    v.Enabled = false
+                end
+            end
         else
+            -- Restore original settings
             Lighting.Brightness = originalLighting.Brightness
             Lighting.ClockTime = originalLighting.ClockTime
             Lighting.FogEnd = originalLighting.FogEnd
+            Lighting.FogStart = originalLighting.FogStart or 0
             Lighting.GlobalShadows = originalLighting.GlobalShadows
             Lighting.OutdoorAmbient = originalLighting.OutdoorAmbient
+            
+            -- Restore effects
+            for _, v in pairs(Lighting:GetChildren()) do
+                if v:IsA("Atmosphere") and originalLighting.Atmosphere then
+                    v.Density = originalLighting.Atmosphere.Density or 0.3
+                    v.Offset = originalLighting.Atmosphere.Offset or 0.25
+                    v.Glare = originalLighting.Atmosphere.Glare or 0
+                    v.Haze = originalLighting.Atmosphere.Haze or 0
+                end
+                
+                if v:IsA("BlurEffect") and originalLighting.Blur then
+                    v.Size = originalLighting.Blur.Size or 0
+                end
+                
+                if v:IsA("ColorCorrectionEffect") and originalLighting.ColorCorrection then
+                    v.Enabled = originalLighting.ColorCorrection.Enabled or false
+                end
+                
+                if v:IsA("SunRaysEffect") and originalLighting.SunRays then
+                    v.Enabled = originalLighting.SunRays.Enabled or false
+                end
+            end
         end
         task.wait(0.5)
     end
@@ -930,8 +1011,28 @@ VisualTab:CreateToggle({
    CurrentValue = false,
    Callback = function(Value)
        VDConfig.Visual.FullbrightEnabled = Value
+       
+       if Value then
+           Rayfield:Notify({
+               Title = "Fullbright Enabled",
+               Content = "Map is now bright! (Fog removed)",
+               Duration = 3,
+               Image = 4483362458,
+           })
+       else
+           Rayfield:Notify({
+               Title = "Fullbright Disabled",
+               Content = "Normal lighting restored",
+               Duration = 3,
+               Image = 4483362458,
+           })
+       end
    end,
 })
+
+VisualTab:CreateLabel("✅ Removes fog completely")
+VisualTab:CreateLabel("✅ Removes atmosphere effects")
+VisualTab:CreateLabel("✅ Removes blur & color correction")
 
 VisualTab:CreateSection("Hide Skill Check UI")
 
@@ -1053,7 +1154,7 @@ MovementTab:CreateToggle({
 SettingsTab:CreateSection("Script Information")
 
 SettingsTab:CreateLabel("Script: VIOLENCE DISTRICT")
-SettingsTab:CreateLabel("Version: 1.0 FULL")
+SettingsTab:CreateLabel("Version: 1.1 FIXED")
 SettingsTab:CreateLabel("Created by: RanZx999")
 SettingsTab:CreateLabel("UI: Rayfield Premium")
 
@@ -1077,7 +1178,7 @@ SettingsTab:CreateButton({
            Content = "VIOLENCE DISTRICT unloaded!",
            Duration = 3,
            Image = 4483362458,
-           })
+       })
        
        wait(1)
        Rayfield:Destroy()
@@ -1090,7 +1191,7 @@ SettingsTab:CreateLabel("• All features auto-save")
 Rayfield:LoadConfiguration()
 
 print("═══════════════════════════════════════════════════════")
-print("🔥 VIOLENCE DISTRICT - FULL Edition 🔥")
+print("🔥 VIOLENCE DISTRICT - FIXED Edition 🔥")
 print("═══════════════════════════════════════════════════════")
 print("✅ Player ESP - Auto-detect + Team Check")
 print("✅ Highlight - Team colors (Green/Red)")
@@ -1098,7 +1199,7 @@ print("✅ Generator ESP - Auto-scan")
 print("✅ Anti-Fail Generator - Hooked")
 print("✅ Anti-Fail Healing - Hooked")
 print("✅ Hide Skill Check UI - Ready")
-print("✅ Fullbright - Ready")
+print("✅ Fullbright - FIXED (Fog removed!)")
 print("✅ Movement - Ready")
 print("═══════════════════════════════════════════════════════")
 print("Created by RanZx999 | UI: Rayfield Premium")
