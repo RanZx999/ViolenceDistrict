@@ -165,13 +165,19 @@ local function setupUnifiedAntiFail()
                 return 
             end
             
+            -- Wait for Events folder (FIXED PATH!)
+            local EventsFolder = ReplicatedStorage:WaitForChild("Events", 10)
+            if not EventsFolder then
+                warn("⚠️ Events folder not found")
+            end
+            
             -- Generator remotes
             local GenRemotes = Remotes:WaitForChild("Generator", 5)
             local GenResultEvent = GenRemotes and GenRemotes:WaitForChild("SkillCheckResultEvent", 5)
             local GenFailEvent = GenRemotes and GenRemotes:FindFirstChild("SkillCheckFailEvent")
             
-            -- Healing remotes
-            local Healing = ReplicatedStorage:FindFirstChild("Healing")
+            -- Healing remotes (FIXED PATH: Events -> Healing)
+            local Healing = EventsFolder and EventsFolder:FindFirstChild("Healing")
             local HealResultEvent = Healing and Healing:FindFirstChild("SkillCheckResultEvent")
             local HealFailEvent = Healing and Healing:FindFirstChild("SkillCheckFailEvent")
             
